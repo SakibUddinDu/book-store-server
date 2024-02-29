@@ -59,8 +59,8 @@ const booksData ={
 }
 
 // Route to get questions
-app.get('/questions', (req, res) => {
-  res.json(questionsData.questions);
+app.get('/books', (req, res) => {
+  res.json(booksData.questions);
 });
 
 // Start the server
