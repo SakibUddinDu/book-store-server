@@ -60,7 +60,7 @@ const booksData ={
 
 // Route to get questions
 app.get('/books', (req, res) => {
-  console.log(booksData.books)
+  // console.log(booksData.books)
   res.json(booksData.books);
 });
 
