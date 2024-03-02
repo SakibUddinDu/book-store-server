@@ -1,11 +1,15 @@
 const express = require('express');
-const cors = require('cors'); // To handle CORS issues
+const cors = require('cors'); 
+const { v4: uuidv4 } = require('uuid');
 
 const app = express();
-const port = 9000;
+const port = 8000;
 
 // Enable CORS for all routes
 app.use(cors());
+
+// Parse JSON bodies for this app.
+app.use(express.json());
 
 // Your questions data
 const booksData ={
@@ -17,7 +21,7 @@ const booksData ={
       "price": 14,
       "rating": 3,
       "featured": false,
-      "id": 1
+      "id": uuidv4()
     },
     {
       "name": "The Last Thing He Told ME",
@@ -26,7 +30,7 @@ const booksData ={
       "price": "1200",
       "rating": "4",
       "featured": false,
-      "id": 2
+      "id": uuidv4()
     },
     {
       "name": "JavaScript: The Definitive Guide",
@@ -35,7 +39,7 @@ const booksData ={
       "price": "200",
       "rating": "5",
       "featured": false,
-      "id": 4
+      "id": uuidv4()
     },
     {
       "name": "JavaScript from Beginner to Professional",
@@ -44,7 +48,7 @@ const booksData ={
       "price": "350",
       "rating": "4",
       "featured": true,
-      "id": 5
+      "id": uuidv4()
     },
     {
       "name": "JavaScript All-in-One For Dummies",
@@ -53,7 +57,7 @@ const booksData ={
       "price": "300",
       "rating": "5",
       "featured": true,
-      "id": 6
+      "id": uuidv4()
     }
   ]
 }
@@ -70,7 +74,7 @@ app.get('/books', (req, res) => {
 
 // Get a specific book by ID
 app.get('/books/:id', (req, res) => {
-  const bookId = parseInt(req.params.id);
+  const bookId = req.params.id;
   const book = booksData.books.find((b) => b.id === bookId);
 
   if (!book) {
@@ -80,57 +84,66 @@ app.get('/books/:id', (req, res) => {
 
   res.json(book);
 });
-
-// Create a new book
+// Route to create a new book
 app.post('/books', (req, res) => {
-  const newBook = req.body;
-
-  // Assign a new unique ID to the book
-  newBook.id = booksData.books.length + 1;
-
-  // Add the new book to the data
-  booksData.books.push(newBook);
-
-  res.status(201).json(newBook);
+  try {
+    const newBook = req.body; // Assuming the request body contains the new book details
+    newBook.id = uuidv4(); // Generate a new UUID for the book
+    booksData.books.push(newBook);
+    res.status(201).json(newBook);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
 });
 
-// Patch a book by ID
+
+// Route to partially update a book by ID using PATCH
 app.patch('/books/:id', (req, res) => {
-  const bookId = parseInt(req.params.id);
-  const updatedFields = req.body;
+  try {
+    const bookId = req.params.id;
+    const updatedFields = req.body; // Assuming the request body contains the fields to be updated
 
-  const index = booksData.books.findIndex((b) => b.id === bookId);
+    // Find the index of the book with the specified ID
+    const index = booksData.books.findIndex((book) => book.id === bookId);
 
-  if (index === -1) {
-    res.status(404).json({ error: 'Book not found' });
-    return;
+    if (index !== -1) {
+      // Partially update the book if found
+      booksData.books[index] = { ...booksData.books[index], ...updatedFields };
+      res.json(booksData.books[index]);
+    } else {
+      res.status(404).json({ error: 'Book not found' });
+    }
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Internal Server Error' });
   }
-
-  // Update the existing book with only the provided fields
-  booksData.books[index] = { ...booksData.books[index], ...updatedFields };
-
-  res.json(booksData.books[index]);
 });
 
 
-// Delete a book by ID
+
+// Route to delete a book by ID
 app.delete('/books/:id', (req, res) => {
-  const bookId = parseInt(req.params.id);
+  try {
+    const bookId = req.params.id;
 
-  const index = booksData.books.findIndex((b) => b.id === bookId);
+    // Filter out the book with the specified ID
+    booksData.books = booksData.books.filter((book) => book.id !== bookId);
 
-  if (index === -1) {
-    res.status(404).json({ error: 'Book not found' });
-    return;
+    res.json({ message: 'Book deleted successfully' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Internal Server Error' });
   }
-
-  // Remove the book from the array
-  const deletedBook = booksData.books.splice(index, 1)[0];
-
-  res.json(deletedBook);
 });
+
+
 
 // Start the server
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
 });
+
+
+
+
